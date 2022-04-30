@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+	<link rel="stylesheet" href="style.css" />
+	<title>Sign In and Create Login</title>
+	<script src="https://unpkg.com/vue@3"></script>
+</head>
+
+<body>
+
+    <div id="app">
+        <div class="container" :class="statusToggle && 'right-panel-active'" id="container">
+            <div class="form-container sign-up-container">
+                <div class="form-regis-login">
+                    <h1>Create Login</h1>
+                    <input v-model = "register.username" type="text" placeholder="Username" />
+                    <input v-model = "register.email" type="email" placeholder="Email" />
+                    <input v-model = "register.password" type="password" placeholder="Password" />
+                    <button @click="clickSignUp()">SIGN UP</button>
+                </div>
+            </div>
+
+            <div class="form-container sign-in-container">
+                <div class="form-regis-login">
+                    <h1>Sign In</h1>
+                    <input v-model = "login.username" type="text" placeholder="username" />
+                    <input v-model = "login.password" type="password" placeholder="Password" />
+                    <button @click="clickSignIn()">Sign In</button>
+                </div>
+            </div>
+
+            <div class="overlay-container">
+                <div class="overlay">
+                    <div class="overlay-panel overlay-left">
+                        <h1>Welcome Back!</h1>
+                        <p>Please login with your personal info.</p>
+                        <button @click="clickToggle()" class="ghost" id="signIn">Sign In</button>
+                    </div>
+                    <div class="overlay-panel overlay-right">
+                        <h1>Hello</h1>
+                        <p>Please enter your personal details.</p>
+                        <button @click="clickToggle()" class="ghost" id="signUp">Sign Up</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script type="text/javascript" >
+        Vue.createApp({
+            data() {
+                return {
+                    statusToggle: false,
+                    login: {
+                        username: '',
+                        password: ''
+                    },
+                    register: {
+                        username: '',
+                        password: '',
+                        email: ''
+                    }
+                }
+            },
+            methods: {
+                clickToggle() {
+                    this.statusToggle = !this.statusToggle;
+                },
+                clickSignIn() {
+                    axios.post("http://localhost:5000/member/login",{
+                        username: this.login.username,
+                        password: this.login.password
+                    }).then(res=>{
+                        if(res.status==200) {window.location.href="Todo.html"}
+                    }).catch(()=>{
+                        alert("เกิดข้อผิดพลาด")
+                    })
+                },
+                clickSignUp() {
+                    axios.post("http://localhost:5000/member",{
+                        username: this.register.username,
+                        password: this.register.password,
+                        email: this.register.email
+                    }).then(res=>{
+                        if(res.status==201) {alert("สมัครสมาชิกเสร็จสิ้น")}
+                    }).catch(()=>{
+                        alert("เกิดข้อผิดพลาด")
+                    })
+                }
+            }
+        }).mount('#app');
+    </script>
+
+</body>
+</head>

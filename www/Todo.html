@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+    integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA=="
+    crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="style1.css">
+    <title>Todo List </title>
+</head>
+
+<body>
+    <script src="https://unpkg.com/vue@3"></script>
+
+    <div id="app">
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <header class="header">
+                <h1 class="header-title" >My Categories</h1>
+                <form class="sidebar-form" data-new-category-form>
+                    <div class="form-control">
+                        <input v-model="category_add.name" type="text" placeholder="Enter Category" data-new-category-input>
+                        <input class="input" v-model="category_add.color" type="color">
+                    </div>
+                    <button type="button" @click="save_category_add()" class="btn btn-primary">
+                        <i class="fa fa-plus" aria-hidden="true"></i> Add Category
+                    </button>
+                </form>
+            </header>
+            <ul class="sidebar-list" data-categories>
+                <li class="sidebar-item">View All</li>
+                <li v-for = "(item,index) in Category" class="sidebar-item">
+                    {{item.name}}
+                    <div>
+                        <div class="todo-actions">
+                        <i @click="set_edit_category(item)" class="far fa-edit"></i>
+                        <i @click="delete_category_todo(item._id)" class="far fa-trash-alt"></i>
+                        <input v-model="item.color" type="color" class="sidebar-color" >
+                    </div>
+                </div>
+                    
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+            <!-- Header -->
+            <header class="header">
+                <div>
+                    <h1 class="header-title">Welcome Back</h1>
+                </div>
+
+                <!-- Create Todo Form -->
+                <form class="create-todo-form" data-new-todo-form>
+                    <div class="form-control">
+                        <select v-model="search_category"  data-new-todo-select required>
+                            <option value="">Select </option>
+                            <option v-for = "(item,index) in Category" :value="item.name">{{item.name}}</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <input v-model = "search" type="search"  placeholder="Search" >
+                    </div>
+                        <button @click="click_add_modal()" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            <i class="fa fa-plus" aria-hidden="false"></i> Add Todo
+                        </button>
+                </form>
+
+
+            </header>
+
+            <!--Popup-->
+            <div :class="status_add&&'is-active'" class="modal">
+                <div @click="status_add=false" class="modal-background"></div>
+                <div class="modal-content">
+                  <!-- Any other Bulma elements you want -->
+                  <div class="modal-card">
+                    <header class="modal-card-head">
+                      <p class="modal-card-title">Add todo</p>
+                    </header>
+                    <section class="modal-card-body">
+                      <!-- Content ... -->
+                    <select class="input" v-model="add.category"  data-new-todo-select required>
+                        <option value="">Select Category</option>
+                        <option v-for = "(item,index) in Category" :value="item.name">{{item.name}}</option>
+                    </select>
+                      <input class="input" v-model="add.header" type="text" placeholder="Enter Name">
+                      <input class="input" v-model="add.timestart" type="datetime-local">
+                      <input class="input" v-model="add.timeend" type="datetime-local">
+                      <input class="input" v-model="add.detail" type="text" placeholder="Enter Details">
+                    </section>
+                    <footer class="modal-card-foot">
+                      <button @click="save_add()" class="button is-success">Save changes</button>
+                      <button @click="status_add=false" class="button">Cancel</button>
+                    </footer>
+                  </div>
+                </div>
+                <button @click="status_add=false" class="modal-close is-large" aria-label="close"></button>
+              </div>
+
+              <div :class="status_edit&&'is-active'" class="modal">
+                <div @click="status_edit=false" class="modal-background"></div>
+                <div class="modal-content">
+                  <!-- Any other Bulma elements you want -->
+                  <div class="modal-card">
+                    <header class="modal-card-head">
+                      <p class="modal-card-title">edit todo</p>
+                    </header>
+                    <section class="modal-card-body">
+                      <!-- Content ... -->
+                      <select class="input" v-model="edit.category" data-new-todo-select required>
+                        <option v-for = "(item,index) in Category" :value="item.name">{{item.name}}</option>
+                    </select>
+                      <input class="input" v-model="edit.header" type="text">
+                      <input class="input" v-model="edit.timestart" type="datetime">
+                      <input class="input" v-model="edit.timeend" type="datetime">
+                      <input class="input" v-model="edit.detail" type="text">
+                    </section>
+                    <footer class="modal-card-foot">
+                      <button @click="edit_todo(edit._id)" class="button is-success">Save changes</button>
+                      <button @click="status_edit=false" class="button">Cancel</button>
+                    </footer>
+                  </div>
+                </div>
+                <button @click="status_edit=false" class="modal-close is-large" aria-label="close"></button>
+              </div>
+
+              <div :class="status_category_edit&&'is-active'" class="modal">
+                <div @click="status_category_edit=false" class="modal-background"></div>
+                <div class="modal-content">
+                  <!-- Any other Bulma elements you want -->
+                  <div class="modal-card">
+                    <header class="modal-card-head">
+                      <p class="modal-card-title">castatus_category_edit todo</p>
+                    </header>
+                    <section class="modal-card-body">
+                      <!-- Content ... -->
+                      <input class="input" v-model="category_edit.name" type="text">
+                      <input class="input" v-model="category_edit.color" type="color">
+                    </section>
+                    <footer class="modal-card-foot">
+                      <button @click="edit_category_todo(category_edit._id)" class="button is-success">Save changes</button>
+                      <button @click="status_category_edit=false" class="button">Cancel</button>
+                    </footer>
+                  </div>
+                </div>
+                <button @click="status_category_edit=false" class="modal-close is-large" aria-label="close"></button>
+              </div>
+
+            <!-- Cards -->
+            <section class="todos-container" data-cards>
+                <div v-for = "(item,index) in renderSearch()" class="todo" :style="'border-color: '+get_color_category(item.category)">
+                    <div class="todo-tag" :style="'color: black; background-color: '+hexToRGB(get_color_category(item.category),0.5)">
+                        {{item.category}}
+                    </div>
+                    
+                        <h1 style="font-size: 20px;">{{item.header}} </h1>
+                        
+                        {{item.timestart}} <br>
+                        {{item.timeend}} <br>
+                        {{item.detail}}
+                    
+                    <div class="todo-actions">
+                        <i @click="set_edit_todo(item)" class="far fa-edit"></i>
+                        <i @click="delete_todo(item._id)" class="far fa-trash-alt"></i>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    </div>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        Vue.createApp({
+            created(){
+                this.get_category_todo()
+                this.get_todo()
+            },
+            data() {
+                return {
+                    search: '',
+                    search_category: '',
+                    status_add: false,
+                    status_edit: false,
+                    status_category_add: false,
+                    status_category_edit: false,
+                    data: [
+                        {id : 0, category: "JS", detail: "todo", timestart: "8 may", timeend: "8 may", header: "Project"}
+                    ],
+                    Category: [
+                        {id : 0, name: "JS", color: ""}
+                    ],
+                    add: {
+                        header: "",
+                        detail: "",
+                        timestart: "",
+                        timeend: "",
+                        category: ""
+                    },
+                    edit: {
+                        _id: "",
+                        header: "",
+                        detail: "",
+                        timestart: "",
+                        timeend: "",
+                        category: ""
+                    },
+                    category_add: {
+                        name: "",
+                        color: "",
+                    },
+                    category_edit: {
+                        _id: "",
+                        name: "",
+                        color: "",
+                    }
+                }
+            },
+            methods: {
+                renderSearch() {
+                    let data = this.data;
+                    if (this.search_category.length > 0) {
+                        data = data.filter(item => item.category === this.search_category);
+                    }
+                    if(this.search.length > 0) {
+                        data = data.filter(item => item.header.includes(this.search));
+                    }
+
+                    return data;
+                    
+                },
+                click_add_modal(){
+                    this.status_add=!this.status_add
+                },
+                click_edit_modal(){
+                    this.status_edit=!this.status_edit
+                },
+                click_category_add_modal(){
+                    this.status_category_add=!this.status_category_add
+                },
+                click_category_edit_modal(){
+                    this.status_category_edit=!this.status_category_edit
+                },
+                set_edit_category(item) {
+                    this.category_edit._id = item._id;
+                    this.category_edit.name = item.name;
+                    this.category_edit.color = item.color;
+                    this.status_category_edit = true;
+                },
+                set_edit_todo(item) {
+                    this.edit._id = item._id;
+                    this.edit.header = item.header;
+                    this.edit.detail = item.detail;
+                    this.edit.category = item.category;
+                    this.edit.timeend = item.timeend;
+                    this.edit.timestart = item.timestart;
+                    this.status_edit = true;
+                },
+                get_color_category(name){
+                    const a=this.Category.find(item=>item.name==name)
+                    if(a!=undefined) {
+                        return a.color
+                    }
+                    return "#0000"
+                },
+                hexToRGB(hex, alpha) {
+    var r = parseInt(hex.slice(1, 3), 16),
+        g = parseInt(hex.slice(3, 5), 16),
+        b = parseInt(hex.slice(5, 7), 16);
+
+    if (alpha) {
+        return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+    } else {
+        return "rgb(" + r + ", " + g + ", " + b + ")";
+    }
+},
+                save_add(){
+                    confirm("คุณต้องการเพิ่ม Todo หรือป่าว"),
+                    axios.post("http://localhost:5000/todo",{
+                        header: this.add.header,
+                        timestart: this.add.timestart,
+                        timeend: this.add.timeend,
+                        detail: this.add.detail,
+                        category: this.add.category,
+                    }).then(res=>{
+                        if(res.status==201) {alert("เพิ่มเสร็จสิ้น")}
+                    }).catch(()=>{
+                        alert("เกิดข้อผิดพลาด")
+                    }).finally(() => {
+                        this.status_add = false;
+
+                        this.get_todo()
+});
+                },
+                
+                edit_todo(id){
+                    confirm("คุณต้องการแก้ไข Todo หรือป่าว")
+                    axios.patch("http://localhost:5000/todo/"+id,{
+                        header: this.edit.header,
+                        timestart: this.edit.timestart,
+                        timeend: this.edit.timeend,
+                        detail: this.edit.detail,
+                        category: this.edit.category,
+                    }).then(res=>{
+                        if(res.status==201) {alert("เพิ่มเสร็จสิ้น")}
+                    }).catch(()=>{
+                        alert("เกิดข้อผิดพลาด")
+                    }).finally(() => {
+                        this.status_edit = false;
+                        this.get_todo()
+});
+                },
+                delete_todo(id){
+                    confirm("คุณต้องการลบ Todo หรือป่าว")
+                    axios.delete("http://localhost:5000/todo/"+id).then(res=>{
+                        if(res.status==201) {alert("เพิ่มเสร็จสิ้น")}
+                    }).catch(()=>{
+                        alert("เกิดข้อผิดพลาด")
+                    }).finally(() => {
+
+                        this.get_todo()
+});
+                },
+                save_category_add(){
+                    confirm("คุณต้องการเพิ่ม Todo หรือป่าว")
+                    axios.post("http://localhost:5000/category",{
+                        name: this.category_add.name,
+                        color: this.category_add.color
+                    }).then(res=>{
+                        if(res.status==201) {alert("เพิ่มเสร็จสิ้น")}
+                    }).catch(()=>{
+                        alert("เกิดข้อผิดพลาด")
+                    }).finally(() => {
+
+                        this.get_category_todo()
+});
+
+                },
+                
+                edit_category_todo(id){
+                    confirm("คุณต้องการแก้ไข Todo หรือป่าว")
+                    axios.patch("http://localhost:5000/category/"+id,{
+                        name: this.category_edit.name,
+                        color: this.category_edit.color
+                    }).then(res=>{
+                        if(res.status==201) {alert("เพิ่มเสร็จสิ้น")}
+                    }).catch(()=>{
+                        alert("เกิดข้อผิดพลาด")
+                    }).finally(() => {
+this.status_category_edit = false;
+                        this.get_category_todo()
+});
+                },
+                delete_category_todo(id){
+                    confirm("คุณต้องการลบ Todo หรือป่าว")
+                    axios.delete("http://localhost:5000/category/"+id).then(res=>{
+                        if(res.status==201) {alert("เพิ่มเสร็จสิ้น")}
+                    }).catch(()=>{
+                        alert("เกิดข้อผิดพลาด")
+                    }).finally(() => {
+                        this.get_category_todo()
+
+});
+                },
+                get_category_todo(){
+                    axios.get("http://localhost:5000/category/").then(res=>{
+                        console.log(res.data)
+                        this.Category=res.data
+                    }).catch(()=>{
+                        alert("เกิดข้อผิดพลาด")
+                    })
+                },
+                get_todo(){
+                    axios.get("http://localhost:5000/todo/").then(res=>{
+                        console.log(res.data)
+                        this.data=res.data
+                    }).catch(()=>{
+                        alert("เกิดข้อผิดพลาด")
+                    })
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+
+</html>
